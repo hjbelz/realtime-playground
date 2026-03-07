@@ -1,0 +1,10 @@
+{
+	"extends": ["@tsconfig/node24/tsconfig.json", "@tsconfig/node-ts/tsconfig.json"],
+	"compilerOptions": {
+		"outDir": "./lib",
+		"rootDir": "./src/server",
+		"declaration": true
+	},
+	"include": ["src/server/**/*.ts"],
+	"exclude": ["src/client", "node_modules", "lib", "dist"]
+}

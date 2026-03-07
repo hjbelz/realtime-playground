@@ -1,0 +1,41 @@
+{
+  "name": "realtime-test",
+  "version": "1.0.0",
+  "description": "Testing the OpenAI realtime model with a small node.JS project.",
+  "license": "ISC",
+  "author": {
+    "name": "Hans-Joachim Belz"
+  },
+  "type": "module",
+  "main": "./lib/index.js",
+  "scripts": {
+    "build:server": "tsc",
+    "build:client": "vite build",
+    "build": "npm run build:server && npm run build:client",
+    "dev:server": "node --watch --experimental-strip-types src/server/index.ts",
+    "dev:client": "vite",
+    "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
+    "start": "node lib/index.js",
+    "lint": "tslint -c tslint.json \"src/server/**/*.ts\""
+  },
+  "dependencies": {
+    "@fastify/static": "^9.0.0",
+    "dotenv": "^17.3.1",
+    "fastify": "^5.8.2",
+    "tslint": "^5.20.1",
+    "typescript": "^5.9.3"
+  },
+  "files": [
+    "./bin/*",
+    "./lib/*"
+  ],
+  "typings": "./lib/index.d.ts",
+  "devDependencies": {
+    "@tsconfig/node-ts": "^23.6.4",
+    "@tsconfig/node24": "^24.0.4",
+    "@types/node": "^25.3.5",
+    "concurrently": "^9.2.1",
+    "ts-node": "^10.9.2",
+    "vite": "^7.3.1"
+  }
+}
