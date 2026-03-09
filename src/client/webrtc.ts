@@ -4,21 +4,13 @@ let pc: RTCPeerConnection | null = null
 let localStream: MediaStream | null = null
 
 export async function startSession(): Promise<void> {
-  // 1. Get ephemeral key from server
-  const sessionRes = await fetch('/api/session')
-  if (!sessionRes.ok) {
-    throw new Error(`Session request failed: ${sessionRes.status}`)
-  }
-  const sessionData = await sessionRes.json() as { client_secret: { value: string } }
-  const ephemeralKey = sessionData.client_secret.value
-
-  // 2. Get microphone access
+  // 1. Get microphone access
   localStream = await navigator.mediaDevices.getUserMedia({ audio: true })
 
-  // 3. Create peer connection
+  // 2. Create peer connection
   pc = new RTCPeerConnection()
 
-  // 4. Add audio tracks; wire remote audio playback
+  // 3. Add audio tracks; wire remote audio playback
   for (const track of localStream.getTracks()) {
     pc.addTrack(track, localStream)
   }
@@ -31,32 +23,26 @@ export async function startSession(): Promise<void> {
     document.body.appendChild(audio)
   }
 
-  // 5. Create data channel
+  // 4. Create data channel
   const dataChannel = pc.createDataChannel('oai-events')
   initDataChannel(dataChannel)
 
-  // 6. Create and set local SDP offer
+  // 5. Create and set local SDP offer
   const offer = await pc.createOffer()
   await pc.setLocalDescription(offer)
 
-  // 7. POST SDP offer to OpenAI
-  const sdpRes = await fetch(
-    'https://api.openai.com/v1/realtime?model=gpt-4o-realtime-preview-2024-12-17',
-    {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${ephemeralKey}`,
-        'Content-Type': 'application/sdp',
-      },
-      body: offer.sdp,
-    }
-  )
+  // 6. POST SDP offer to server (server proxies to OpenAI)
+  const sdpRes = await fetch('/api/session', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/sdp' },
+    body: offer.sdp,
+  })
 
   if (!sdpRes.ok) {
     throw new Error(`SDP exchange failed: ${sdpRes.status}`)
   }
 
-  // 8. Set remote SDP answer
+  // 7. Set remote SDP answer
   const sdpAnswer = await sdpRes.text()
   await pc.setRemoteDescription({ type: 'answer', sdp: sdpAnswer })
 }
