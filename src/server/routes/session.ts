@@ -1,4 +1,5 @@
 import type { FastifyInstance } from 'fastify'
+import { openSideband } from '../sideband.js'
 
 const sessionConfig = JSON.stringify({
   type: "realtime",
@@ -37,6 +38,11 @@ export async function sessionRoutes(fastify: FastifyInstance): Promise<void> {
         const text = await response.text()
         fastify.log.error({ status: response.status, body: text }, 'OpenAI session error')
         return reply.status(502).send({ error: 'Failed to create OpenAI session' })
+      }
+
+      const callId = response.headers.get('Location')?.split('/').pop()
+      if (callId) {
+        openSideband(callId, apiKey, (msg, data) => fastify.log.info({ msg, ...data as object }))
       }
 
       const sdpAnswer = await response.text()
