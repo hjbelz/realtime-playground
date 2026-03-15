@@ -4,7 +4,18 @@ import { openSideband } from '../sideband.js'
 const sessionConfig = JSON.stringify({
   type: "realtime",
   model: "gpt-realtime",
-  audio: { output: { voice: "marin" } },
+  audio: { 
+    output: { 
+      voice: "marin" 
+    },
+    input: {
+      transcription: {
+        "model": "gpt-4o-transcribe",
+        "prompt": "",
+        "language": "en"
+      },
+    }
+  },
 });
 
 
