@@ -8,6 +8,19 @@ const eventsDiv = document.getElementById('events') as HTMLDivElement
 const outputTranscriptionDiv = document.getElementById('output-transcription') as HTMLDivElement
 const transcriptionDiv = document.getElementById('transcription') as HTMLDivElement
 const classificationsDiv = document.getElementById('classifications') as HTMLDivElement
+const inputTotalEl = document.getElementById('input-total') as HTMLSpanElement
+const inputTextEl = document.getElementById('input-text-tokens') as HTMLSpanElement
+const inputAudioEl = document.getElementById('input-audio-tokens') as HTMLSpanElement
+const outputTotalEl = document.getElementById('output-total') as HTMLSpanElement
+const outputTextEl = document.getElementById('output-text-tokens') as HTMLSpanElement
+const outputAudioEl = document.getElementById('output-audio-tokens') as HTMLSpanElement
+
+let totalInputTokens = 0
+let totalInputTextTokens = 0
+let totalInputAudioTokens = 0
+let totalOutputTokens = 0
+let totalOutputTextTokens = 0
+let totalOutputAudioTokens = 0
 
 function setStatus(text: string): void {
   statusDiv.textContent = text
@@ -86,7 +99,7 @@ function handleIntentClassification(event: { type: string; [k: string]: unknown 
         output_modalities: ['text'],
         metadata: { topic: 'classification' },
         instructions: "You are a linguist classifying the intent of messages. Carefully analyze the last user message and reply with exactly one word from: question, statement, command, greeting, other.",
-        input: [{ type: 'item_reference', id: event.item_id as string }],
+        input: [{ type: 'item_reference', id: (event.item as { id: string }).id }],
       },
     })
   } else if (
@@ -106,15 +119,45 @@ function handleIntentClassification(event: { type: string; [k: string]: unknown 
 
 
 
+function handleTokenUsage(event: { type: string; [k: string]: unknown }): void {
+  if (event.type !== 'response.done') return
+  const usage = (event.response as { usage?: {
+    input_tokens?: number
+    output_tokens?: number
+    input_token_details?: { text_tokens?: number; audio_tokens?: number }
+    output_token_details?: { text_tokens?: number; audio_tokens?: number }
+  } })?.usage
+  if (!usage) return
+
+  totalInputTokens += usage.input_tokens ?? 0
+  totalInputTextTokens += usage.input_token_details?.text_tokens ?? 0
+  totalInputAudioTokens += usage.input_token_details?.audio_tokens ?? 0
+  totalOutputTokens += usage.output_tokens ?? 0
+  totalOutputTextTokens += usage.output_token_details?.text_tokens ?? 0
+  totalOutputAudioTokens += usage.output_token_details?.audio_tokens ?? 0
+
+  inputTotalEl.textContent = String(totalInputTokens)
+  inputTextEl.textContent = String(totalInputTextTokens)
+  inputAudioEl.textContent = String(totalInputAudioTokens)
+  outputTotalEl.textContent = String(totalOutputTokens)
+  outputTextEl.textContent = String(totalOutputTextTokens)
+  outputAudioEl.textContent = String(totalOutputAudioTokens)
+}
+
 onDataChannelMessage(handleEventLogging)
 onDataChannelMessage(handleOutputTranscriptionEvents)
 onDataChannelMessage(handleInputTranscriptionEvents)
 onDataChannelMessage(handleIntentClassification)
+onDataChannelMessage(handleTokenUsage)
 
 startBtn.addEventListener('click', async () => {
   startBtn.disabled = true
   stopBtn.disabled = false
   setStatus('Connecting...')
+  totalInputTokens = totalInputTextTokens = totalInputAudioTokens = 0
+  totalOutputTokens = totalOutputTextTokens = totalOutputAudioTokens = 0
+  inputTotalEl.textContent = inputTextEl.textContent = inputAudioEl.textContent = '0'
+  outputTotalEl.textContent = outputTextEl.textContent = outputAudioEl.textContent = '0'
   try {
     await startSession()
     setStatus('Connected')

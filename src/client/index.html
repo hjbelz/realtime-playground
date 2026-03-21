@@ -12,6 +12,31 @@
     #output-transcription { border: 1px solid #aac; padding: 0.5rem; min-height: 100px; margin-top: 1rem; font-size: 1rem; font-family: sans-serif; overflow-y: auto; }
     #transcription { border: 1px solid #aac; padding: 0.5rem; min-height: 100px; margin-top: 1rem; font-size: 1rem; font-family: sans-serif; overflow-y: auto; }
     #classifications { border: 1px solid #cca; padding: 0.5rem; min-height: 60px; margin-top: 0.5rem; font-size: 1rem; font-family: monospace; overflow-y: auto; }
+    #token-usage {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.5rem;
+      margin-top: 1rem;
+    }
+    .token-col {
+      background: #f0f0f0;
+      padding: 0.75rem;
+      border-radius: 4px;
+    }
+    .token-col .total {
+      font-size: 1.5rem;
+      font-weight: bold;
+    }
+    .token-col .label {
+      font-size: 0.8rem;
+      color: #666;
+      margin-bottom: 0.25rem;
+    }
+    .token-col .details {
+      font-size: 0.85rem;
+      color: #555;
+      margin-top: 0.4rem;
+    }
   </style>
 </head>
 <body>
@@ -19,6 +44,24 @@
   <div>
     <button id="start">Start</button>
     <button id="stop" disabled>Stop</button>
+  </div>
+  <div id="token-usage">
+    <div class="token-col" id="input-col">
+      <div class="label">Input tokens</div>
+      <div class="total" id="input-total">0</div>
+      <div class="details">
+        <span id="input-text-tokens">0</span> text &nbsp;
+        <span id="input-audio-tokens">0</span> audio
+      </div>
+    </div>
+    <div class="token-col" id="output-col">
+      <div class="label">Output tokens</div>
+      <div class="total" id="output-total">0</div>
+      <div class="details">
+        <span id="output-text-tokens">0</span> text &nbsp;
+        <span id="output-audio-tokens">0</span> audio
+      </div>
+    </div>
   </div>
   <div id="status">Idle</div>
   <div id="events"></div>
