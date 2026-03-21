@@ -14,6 +14,13 @@ const inputAudioEl = document.getElementById('input-audio-tokens') as HTMLSpanEl
 const outputTotalEl = document.getElementById('output-total') as HTMLSpanElement
 const outputTextEl = document.getElementById('output-text-tokens') as HTMLSpanElement
 const outputAudioEl = document.getElementById('output-audio-tokens') as HTMLSpanElement
+const inputCostEl  = document.getElementById('input-cost')  as HTMLElement
+const outputCostEl = document.getElementById('output-cost') as HTMLElement
+
+const PRICE_TEXT_INPUT   = 4.00  / 1_000_000
+const PRICE_AUDIO_INPUT  = 32.00 / 1_000_000
+const PRICE_TEXT_OUTPUT  = 16.00 / 1_000_000
+const PRICE_AUDIO_OUTPUT = 64.00 / 1_000_000
 
 let totalInputTokens = 0
 let totalInputTextTokens = 0
@@ -142,6 +149,11 @@ function handleTokenUsage(event: { type: string; [k: string]: unknown }): void {
   outputTotalEl.textContent = String(totalOutputTokens)
   outputTextEl.textContent = String(totalOutputTextTokens)
   outputAudioEl.textContent = String(totalOutputAudioTokens)
+
+  const inputCost  = totalInputTextTokens  * PRICE_TEXT_INPUT   + totalInputAudioTokens  * PRICE_AUDIO_INPUT
+  const outputCost = totalOutputTextTokens * PRICE_TEXT_OUTPUT  + totalOutputAudioTokens * PRICE_AUDIO_OUTPUT
+  inputCostEl.textContent  = `$${inputCost.toFixed(6)}`
+  outputCostEl.textContent = `$${outputCost.toFixed(6)}`
 }
 
 onDataChannelMessage(handleEventLogging)
@@ -158,6 +170,7 @@ startBtn.addEventListener('click', async () => {
   totalOutputTokens = totalOutputTextTokens = totalOutputAudioTokens = 0
   inputTotalEl.textContent = inputTextEl.textContent = inputAudioEl.textContent = '0'
   outputTotalEl.textContent = outputTextEl.textContent = outputAudioEl.textContent = '0'
+  inputCostEl.textContent = outputCostEl.textContent = '$0.000000'
   try {
     await startSession()
     setStatus('Connected')
@@ -167,6 +180,17 @@ startBtn.addEventListener('click', async () => {
     startBtn.disabled = false
     stopBtn.disabled = true
   }
+})
+
+document.querySelectorAll<HTMLButtonElement>('.copy-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const el = document.getElementById(btn.dataset.target!)!
+    navigator.clipboard.writeText(el.innerText).then(() => {
+      btn.classList.add('copied')
+      btn.textContent = '✓'
+      setTimeout(() => { btn.classList.remove('copied'); btn.textContent = '⧉' }, 1500)
+    })
+  })
 })
 
 stopBtn.addEventListener('click', () => {

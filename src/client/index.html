@@ -50,6 +50,24 @@
     .token-col .label { font-size: 0.8rem; color: #666; margin-bottom: 0.25rem; }
     .token-col .details { font-size: 0.85rem; color: #555; margin-top: 0.4rem; }
 
+    /* ── Panel header with copy button ── */
+    .panel-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 0.4rem;
+    }
+    .panel-header .panel-title { margin: 0; }
+    .copy-btn {
+      background: none; border: 1px solid #ccc; border-radius: 4px;
+      cursor: pointer; font-size: 0.9rem; padding: 0.15rem 0.4rem;
+      color: #666; line-height: 1;
+      transition: background 0.15s, color 0.15s, border-color 0.15s;
+    }
+    .copy-btn:hover { background: #eee; color: #333; }
+    .copy-btn.copied { border-color: #22c55e; color: #22c55e; }
+
+    /* ── Cost under token count ── */
+    .token-col .cost { font-size: 0.8rem; color: #888; margin-top: 0.25rem; }
+
     /* ── Audio-player buttons ── */
     #controls { display: flex; gap: 0.75rem; align-items: center; }
 
@@ -93,6 +111,7 @@
             <span id="input-text-tokens">0</span> text &nbsp;
             <span id="input-audio-tokens">0</span> audio
           </div>
+          <div class="cost" id="input-cost">$0.000000</div>
         </div>
         <div class="token-col" id="output-col">
           <div class="label">Output tokens</div>
@@ -101,6 +120,7 @@
             <span id="output-text-tokens">0</span> text &nbsp;
             <span id="output-audio-tokens">0</span> audio
           </div>
+          <div class="cost" id="output-cost">$0.000000</div>
         </div>
       </div>
       <div id="status">Idle</div>
@@ -110,15 +130,24 @@
     <!-- Column 2 -->
     <div class="col">
       <section class="panel">
-        <h3 class="panel-title">Input Transcription</h3>
+        <div class="panel-header">
+          <h3 class="panel-title">Input Transcription</h3>
+          <button class="copy-btn" data-target="transcription" title="Copy to clipboard">⧉</button>
+        </div>
         <div id="transcription"></div>
       </section>
       <section class="panel">
-        <h3 class="panel-title">Output Transcription</h3>
+        <div class="panel-header">
+          <h3 class="panel-title">Output Transcription</h3>
+          <button class="copy-btn" data-target="output-transcription" title="Copy to clipboard">⧉</button>
+        </div>
         <div id="output-transcription"></div>
       </section>
       <section class="panel">
-        <h3 class="panel-title">Classifications</h3>
+        <div class="panel-header">
+          <h3 class="panel-title">Classifications</h3>
+          <button class="copy-btn" data-target="classifications" title="Copy to clipboard">⧉</button>
+        </div>
         <div id="classifications"></div>
       </section>
     </div>
