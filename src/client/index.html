@@ -22,7 +22,8 @@
     }
 
     /* ── Existing panel styles (keep, adjust margins) ── */
-    #status { margin: 0.75rem 0; font-weight: bold; }
+    #controls { display: flex; gap: 0.75rem; align-items: center; }
+    #status { font-weight: bold; color: #555; }
     #events {
       border: 1px solid #ccc; padding: 0.5rem;
       height: 300px; overflow-y: auto;
@@ -69,8 +70,6 @@
     .token-col .cost { font-size: 0.8rem; color: #888; margin-top: 0.25rem; }
 
     /* ── Audio-player buttons ── */
-    #controls { display: flex; gap: 0.75rem; align-items: center; }
-
     button#start, button#stop {
       display: flex; align-items: center; gap: 0.5rem;
       padding: 0.55rem 1.1rem;
@@ -102,6 +101,7 @@
       <div id="controls">
         <button id="start"><span class="btn-icon">▶</span> Start</button>
         <button id="stop" disabled><span class="btn-icon">■</span> Stop</button>
+        <div id="status">Idle</div>
       </div>
       <div id="token-usage">
         <div class="token-col" id="input-col">
@@ -123,7 +123,10 @@
           <div class="cost" id="output-cost">$0.000000</div>
         </div>
       </div>
-      <div id="status">Idle</div>
+      <div class="panel-header">
+        <h3 class="panel-title">Event Log</h3>
+        <button class="copy-btn" data-target="events" title="Copy to clipboard">⧉</button>
+      </div>
       <div id="events"></div>
     </div>
 
