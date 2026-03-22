@@ -14,6 +14,9 @@ const sessionConfig = JSON.stringify({
         "prompt": "",
         "language": "en"
       },
+      turn_detection: {
+        "type": "semantic_vad",
+      }, 
     }
   },
 });
