@@ -1,10 +1,11 @@
-import { startSession, stopSession } from './webrtc'
+import { startSession, stopSession, onLocalStream, onRemoteStream } from './webrtc'
 import { onDataChannelMessage, sendEvent } from './datachannel'
 
 const startBtn = document.getElementById('start') as HTMLButtonElement
 const stopBtn = document.getElementById('stop') as HTMLButtonElement
 const statusDiv = document.getElementById('status') as HTMLDivElement
 const eventsDiv = document.getElementById('events') as HTMLDivElement
+const eventFiltersDiv = document.getElementById('event-filters') as HTMLDivElement
 const outputTranscriptionDiv = document.getElementById('output-transcription') as HTMLDivElement
 const transcriptionDiv = document.getElementById('transcription') as HTMLDivElement
 const classificationsDiv = document.getElementById('classifications') as HTMLDivElement
@@ -16,11 +17,87 @@ const outputTextEl = document.getElementById('output-text-tokens') as HTMLSpanEl
 const outputAudioEl = document.getElementById('output-audio-tokens') as HTMLSpanElement
 const inputCostEl  = document.getElementById('input-cost')  as HTMLElement
 const outputCostEl = document.getElementById('output-cost') as HTMLElement
+const convMicBar    = document.getElementById('conv-mic-bar')    as HTMLDivElement
+const convModelBar  = document.getElementById('conv-model-bar')  as HTMLDivElement
+const convMicLabel  = document.getElementById('conv-mic-label')  as HTMLSpanElement
+const convModelLabel= document.getElementById('conv-model-label')as HTMLSpanElement
 
 const PRICE_TEXT_INPUT   = 4.00  / 1_000_000
 const PRICE_AUDIO_INPUT  = 32.00 / 1_000_000
 const PRICE_TEXT_OUTPUT  = 16.00 / 1_000_000
 const PRICE_AUDIO_OUTPUT = 64.00 / 1_000_000
+
+// ── Audio visualizer ──────────────────────────────────────────────────────────
+let audioCtx: AudioContext | null = null
+const rafHandles: number[] = []
+
+function setupAnalyser(stream: MediaStream, barEl: HTMLDivElement): void {
+  if (!audioCtx) audioCtx = new AudioContext()
+  const source   = audioCtx.createMediaStreamSource(stream)
+  const analyser = audioCtx.createAnalyser()
+  analyser.fftSize = 256
+  source.connect(analyser)
+  const buf = new Uint8Array(analyser.fftSize)
+
+  function tick(): void {
+    analyser.getByteTimeDomainData(buf)
+    let sum = 0
+    for (const v of buf) sum += Math.abs(v - 128)
+    const rms = sum / buf.length / 128
+    barEl.style.width = `${Math.min(rms * 300, 100)}%`
+    rafHandles.push(requestAnimationFrame(tick))
+  }
+  rafHandles.push(requestAnimationFrame(tick))
+}
+
+function stopVisualization(): void {
+  for (const h of rafHandles) cancelAnimationFrame(h)
+  rafHandles.length = 0
+  if (audioCtx) { audioCtx.close(); audioCtx = null }
+  convMicBar.style.width   = '0%'
+  convModelBar.style.width = '0%'
+}
+
+// ── Conversation state ────────────────────────────────────────────────────────
+let listeningActive = false
+let speakingActive  = false
+
+function setListening(active: boolean): void {
+  listeningActive = active
+  convMicLabel.classList.toggle('active', active)
+  convMicBar.classList.toggle('active', active)
+}
+
+function setSpeaking(active: boolean): void {
+  speakingActive = active
+  convModelLabel.classList.toggle('active', active)
+  convModelBar.classList.toggle('active', active)
+}
+
+type RealtimeEvent = { type: string; [k: string]: unknown }
+const allEvents: RealtimeEvent[] = []
+const eventsByGroup = new Map<string, number[]>()
+const activeGroups = new Set<string>()
+
+function getGroup(type: string): string {
+  return type.split('.')[0]
+}
+
+function rebuildEventLog(): void {
+  eventsDiv.innerHTML = ''
+  const indices: number[] = []
+  for (const group of activeGroups) {
+    const groupIndices = eventsByGroup.get(group)
+    if (groupIndices) indices.push(...groupIndices)
+  }
+  indices.sort((a, b) => a - b)
+  for (const i of indices) {
+    const line = document.createElement('div')
+    line.textContent = JSON.stringify(allEvents[i])
+    eventsDiv.appendChild(line)
+  }
+  eventsDiv.scrollTop = eventsDiv.scrollHeight
+}
 
 let totalInputTokens = 0
 let totalInputTextTokens = 0
@@ -38,11 +115,51 @@ function setStatus(text: string): void {
  * 
  * @param event The event object to log.
  */
-function handleEventLogging(event: { type: string; [k: string]: unknown }): void {
-  const line = document.createElement('div')
-  line.textContent = JSON.stringify(event)
-  eventsDiv.appendChild(line)
-  eventsDiv.scrollTop = eventsDiv.scrollHeight
+function handleEventLogging(event: RealtimeEvent): void {
+  const idx = allEvents.length
+  allEvents.push(event)
+
+  const group = getGroup(event.type)
+  let groupIndices = eventsByGroup.get(group)
+  if (!groupIndices) {
+    groupIndices = []
+    eventsByGroup.set(group, groupIndices)
+    activeGroups.add(group)
+
+    const label = document.createElement('label')
+    const cb = document.createElement('input')
+    cb.type = 'checkbox'
+    cb.checked = true
+    cb.dataset.group = group
+    cb.addEventListener('change', () => {
+      if (cb.checked) activeGroups.add(group)
+      else activeGroups.delete(group)
+      rebuildEventLog()
+    })
+    label.appendChild(cb)
+    label.appendChild(document.createTextNode(group))
+    eventFiltersDiv.appendChild(label)
+  }
+  groupIndices.push(idx)
+
+  if (activeGroups.has(group)) {
+    const line = document.createElement('div')
+    line.textContent = JSON.stringify(event)
+    eventsDiv.appendChild(line)
+    eventsDiv.scrollTop = eventsDiv.scrollHeight
+  }
+}
+
+function handleConversationVisualization(event: RealtimeEvent): void {
+  if (event.type === 'input_audio_buffer.speech_started') {
+    setListening(true)
+  } else if (event.type === 'input_audio_buffer.speech_stopped' || event.type === 'input_audio_buffer.committed') {
+    setListening(false)
+  } else if (event.type.startsWith('output_audio_buffer.') && event.type.includes('start')) {
+    setSpeaking(true)
+  } else if (event.type.startsWith('output_audio_buffer.') && (event.type.includes('stop') || event.type.includes('clear') || event.type.includes('done'))) {
+    setSpeaking(false)
+  }
 }
 
 /**
@@ -156,7 +273,11 @@ function handleTokenUsage(event: { type: string; [k: string]: unknown }): void {
   outputCostEl.textContent = `$${outputCost.toFixed(6)}`
 }
 
+onLocalStream( stream => setupAnalyser(stream, convMicBar))
+onRemoteStream(stream => setupAnalyser(stream, convModelBar))
+
 onDataChannelMessage(handleEventLogging)
+onDataChannelMessage(handleConversationVisualization)
 onDataChannelMessage(handleOutputTranscriptionEvents)
 onDataChannelMessage(handleInputTranscriptionEvents)
 onDataChannelMessage(handleIntentClassification)
@@ -166,6 +287,14 @@ startBtn.addEventListener('click', async () => {
   startBtn.disabled = true
   stopBtn.disabled = false
   setStatus('Connecting...')
+  stopVisualization()
+  setListening(false)
+  setSpeaking(false)
+  allEvents.length = 0
+  eventsByGroup.clear()
+  activeGroups.clear()
+  eventFiltersDiv.innerHTML = ''
+  eventsDiv.innerHTML = ''
   totalInputTokens = totalInputTextTokens = totalInputAudioTokens = 0
   totalOutputTokens = totalOutputTextTokens = totalOutputAudioTokens = 0
   inputTotalEl.textContent = inputTextEl.textContent = inputAudioEl.textContent = '0'
@@ -195,6 +324,9 @@ document.querySelectorAll<HTMLButtonElement>('.copy-btn').forEach(btn => {
 
 stopBtn.addEventListener('click', () => {
   stopSession()
+  stopVisualization()
+  setListening(false)
+  setSpeaking(false)
   stopBtn.disabled = true
   startBtn.disabled = false
   setStatus('Idle')

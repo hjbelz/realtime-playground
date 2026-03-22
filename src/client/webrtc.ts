@@ -3,9 +3,15 @@ import { initDataChannel, cleanupDataChannel } from './datachannel'
 let pc: RTCPeerConnection | null = null
 let localStream: MediaStream | null = null
 
+let localStreamCb:  ((s: MediaStream) => void) | null = null
+let remoteStreamCb: ((s: MediaStream) => void) | null = null
+export function onLocalStream (cb: (s: MediaStream) => void): void { localStreamCb  = cb }
+export function onRemoteStream(cb: (s: MediaStream) => void): void { remoteStreamCb = cb }
+
 export async function startSession(): Promise<void> {
   // 1. Get microphone access
   localStream = await navigator.mediaDevices.getUserMedia({ audio: true })
+  localStreamCb?.(localStream)
 
   // 2. Create peer connection
   pc = new RTCPeerConnection()
@@ -21,6 +27,7 @@ export async function startSession(): Promise<void> {
     audio.style.display = 'none'
     audio.srcObject = event.streams[0]
     document.body.appendChild(audio)
+    remoteStreamCb?.(event.streams[0])
   }
 
   // 4. Create data channel
