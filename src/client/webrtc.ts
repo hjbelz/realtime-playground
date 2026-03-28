@@ -8,7 +8,7 @@ let remoteStreamCb: ((s: MediaStream) => void) | null = null
 export function onLocalStream (cb: (s: MediaStream) => void): void { localStreamCb  = cb }
 export function onRemoteStream(cb: (s: MediaStream) => void): void { remoteStreamCb = cb }
 
-export async function startSession(): Promise<void> {
+export async function startSession(systemPrompt = ''): Promise<void> {
   // 1. Get microphone access
   localStream = await navigator.mediaDevices.getUserMedia({ audio: true })
   localStreamCb?.(localStream)
@@ -39,7 +39,10 @@ export async function startSession(): Promise<void> {
   await pc.setLocalDescription(offer)
 
   // 6. POST SDP offer to server (server proxies to OpenAI)
-  const sdpRes = await fetch('/api/session', {
+  const url = systemPrompt
+    ? `/api/session?instructions=${encodeURIComponent(systemPrompt)}`
+    : '/api/session'
+  const sdpRes = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/sdp' },
     body: offer.sdp,
@@ -65,12 +68,14 @@ export function stopSession(): void {
   }
 
   if (pc) {
+    pc.ontrack = null
     pc.close()
     pc = null
   }
 
-  // Remove any injected audio elements
+  // Release and remove any injected audio elements
   for (const el of Array.from(document.querySelectorAll('audio'))) {
+    el.srcObject = null
     el.remove()
   }
 }

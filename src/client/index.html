@@ -87,6 +87,20 @@
     .amp-bar { height: 100%; width: 0%; background: #d1d5db; border-radius: 5px; transition: width 0.04s linear; }
     .amp-bar.active { background: #22c55e; }
 
+    /* ── System prompt pane ── */
+    #system-prompt-panel { margin-top: 1rem; }
+    #system-prompt {
+      width: 100%; box-sizing: border-box;
+      height: 120px; resize: vertical;
+      border: 1px solid #ccc; border-radius: 4px;
+      padding: 0.5rem; font-size: 0.85rem; font-family: monospace;
+      background: #fff; color: #222;
+      transition: background 0.2s, color 0.2s, border-color 0.2s;
+    }
+    #system-prompt:disabled {
+      background: #f5f5f5; color: #999; border-color: #ddd; cursor: not-allowed;
+    }
+
     /* ── Audio-player buttons ── */
     button#start, button#stop {
       display: flex; align-items: center; gap: 0.5rem;
@@ -157,6 +171,12 @@
       </div>
       <div id="event-filters"></div>
       <div id="events"></div>
+      <div id="system-prompt-panel" class="panel">
+        <div class="panel-header">
+          <h3 class="panel-title">System Prompt</h3>
+        </div>
+        <textarea id="system-prompt" placeholder="Enter system prompt (only editable while disconnected)…"></textarea>
+      </div>
     </div>
 
     <!-- Column 2 -->

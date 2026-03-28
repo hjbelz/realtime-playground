@@ -44,8 +44,11 @@ export function onDataChannelMessage(handler: EventHandler): void {
 
 export function cleanupDataChannel(): void {
   if (dc) {
+    dc.onopen = null
+    dc.onmessage = null
+    dc.onclose = null
+    dc.onerror = null
     dc.close()
     dc = null
   }
-  handlers.length = 0
 }

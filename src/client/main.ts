@@ -21,6 +21,7 @@ const convMicBar    = document.getElementById('conv-mic-bar')    as HTMLDivEleme
 const convModelBar  = document.getElementById('conv-model-bar')  as HTMLDivElement
 const convMicLabel  = document.getElementById('conv-mic-label')  as HTMLSpanElement
 const convModelLabel= document.getElementById('conv-model-label')as HTMLSpanElement
+const systemPromptEl = document.getElementById('system-prompt') as HTMLTextAreaElement
 
 const PRICE_TEXT_INPUT   = 4.00  / 1_000_000
 const PRICE_AUDIO_INPUT  = 32.00 / 1_000_000
@@ -286,6 +287,7 @@ onDataChannelMessage(handleTokenUsage)
 startBtn.addEventListener('click', async () => {
   startBtn.disabled = true
   stopBtn.disabled = false
+  systemPromptEl.disabled = true
   setStatus('Connecting...')
   stopVisualization()
   setListening(false)
@@ -295,19 +297,25 @@ startBtn.addEventListener('click', async () => {
   activeGroups.clear()
   eventFiltersDiv.innerHTML = ''
   eventsDiv.innerHTML = ''
+  transcriptionDiv.innerHTML = ''
+  outputTranscriptionDiv.innerHTML = ''
+  classificationsDiv.innerHTML = ''
+  currentOutputTranscriptionSpan = null
+  currentInputTranscriptionUtteranceSpan = null
   totalInputTokens = totalInputTextTokens = totalInputAudioTokens = 0
   totalOutputTokens = totalOutputTextTokens = totalOutputAudioTokens = 0
   inputTotalEl.textContent = inputTextEl.textContent = inputAudioEl.textContent = '0'
   outputTotalEl.textContent = outputTextEl.textContent = outputAudioEl.textContent = '0'
   inputCostEl.textContent = outputCostEl.textContent = '$0.000000'
   try {
-    await startSession()
+    await startSession(systemPromptEl.value.trim())
     setStatus('Connected')
   } catch (err) {
     console.error(err)
     setStatus(`Error: ${(err as Error).message}`)
     startBtn.disabled = false
     stopBtn.disabled = true
+    systemPromptEl.disabled = false
   }
 })
 
@@ -329,5 +337,6 @@ stopBtn.addEventListener('click', () => {
   setSpeaking(false)
   stopBtn.disabled = true
   startBtn.disabled = false
+  systemPromptEl.disabled = false
   setStatus('Idle')
 })
