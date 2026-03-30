@@ -54,11 +54,6 @@ export async function startSession(systemPrompt = ''): Promise<void> {
 
   // 7. Set remote SDP answer
   const sdpAnswer = await sdpRes.text()
-
-
-  const outputTranscriptionDiv = document.getElementById('output-transcription') as HTMLDivElement
-  outputTranscriptionDiv.textContent = 'SDP answer received:' +  sdpAnswer
-
   await pc.setRemoteDescription({ type: 'answer', sdp: sdpAnswer })
 }
 

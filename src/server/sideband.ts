@@ -2,26 +2,24 @@ import WebSocket from 'ws'
 
 const activeSidebands = new Map<string, WebSocket>()
 
-export function openSideband(callId: string, apiKey: string, log: (msg: string, data?: unknown) => void): void {
-  const ws = new WebSocket(
-    `wss://api.openai.com/v1/realtime?call_id=${callId}`,
-    { headers: { Authorization: `Bearer ${apiKey}` } }
-  )
+export function openSideband(wsUrl: string, headers: Record<string, string>, log: (msg: string, data?: unknown) => void): void {
+  const ws = new WebSocket(wsUrl, { headers })
 
-  activeSidebands.set(callId, ws)
+  const id = wsUrl
+  activeSidebands.set(id, ws)
 
-  ws.on('open', () => log('sideband open', { callId }))
+  ws.on('open', () => log('sideband open', { url: wsUrl }))
   ws.on('message', (data) => {
     const event = JSON.parse(data.toString())
-    log('sideband event', { callId, event })
+    log('sideband event', { event })
   })
-  ws.on('error', (err) => log('sideband error', { callId, err }))
+  ws.on('error', (err) => log('sideband error', { url: wsUrl, err }))
   ws.on('close', () => {
-    log('sideband closed', { callId })
-    activeSidebands.delete(callId)
+    log('sideband closed', { url: wsUrl })
+    activeSidebands.delete(id)
   })
 }
 
-export function getSideband(callId: string): WebSocket | undefined {
-  return activeSidebands.get(callId)
+export function getSideband(id: string): WebSocket | undefined {
+  return activeSidebands.get(id)
 }
