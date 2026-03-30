@@ -17,17 +17,17 @@ function buildSessionConfig(instructions?: string): object {
       output: {
         voice: 'marin',
       },
-      /*
       input: {
         transcription: {
           model: 'gpt-4o-transcribe',
+          // model: 'whisper-1',
           prompt: '',
           language: 'en',
         },
         turn_detection: {
           type: 'semantic_vad',
         },
-      }, */
+      },
     },
   }
 }

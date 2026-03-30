@@ -199,6 +199,11 @@ function handleInputTranscriptionEvents(event: { type: string; [k: string]: unkn
     currentInputTranscriptionUtteranceSpan.textContent += (event.delta as string) ?? ''
 
   } else if (event.type === 'conversation.item.input_audio_transcription.completed') {
+    if (!currentInputTranscriptionUtteranceSpan) {
+      currentInputTranscriptionUtteranceSpan = document.createElement('span')
+      currentInputTranscriptionUtteranceSpan.textContent = (event.transcript as string) ?? ''
+      transcriptionDiv.appendChild(currentInputTranscriptionUtteranceSpan)
+    }
     transcriptionDiv.appendChild(document.createElement('hr'))
     currentInputTranscriptionUtteranceSpan = null
 
