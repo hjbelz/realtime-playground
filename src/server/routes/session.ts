@@ -17,6 +17,7 @@ function buildSessionConfig(instructions?: string): object {
       output: {
         voice: 'marin',
       },
+      /*
       input: {
         transcription: {
           model: 'gpt-4o-transcribe',
@@ -26,7 +27,7 @@ function buildSessionConfig(instructions?: string): object {
         turn_detection: {
           type: 'semantic_vad',
         },
-      },
+      }, */
     },
   }
 }
@@ -43,10 +44,12 @@ export async function sessionRoutes(fastify: FastifyInstance): Promise<void> {
 
     try {
       // Step 1: Get ephemeral token (embeds session config)
+      fastify.log.info('Attempting to get ephemeral token from provider: ' + provider.toString())
       const token = await provider.getEphemeralToken(sessionConfig)
-      fastify.log.info('Obtained ephemeral token')
+      fastify.log.info('Ephemeral token obtained')
 
       // Step 2: Exchange SDP using the ephemeral token
+      fastify.log.info('Attempting to exchange SDP with provider: ' + provider.toString())     
       const { sdpAnswer, callId } = await provider.exchangeSdp(token, sdpOffer)
       fastify.log.info({ callId }, 'SDP exchange complete')
 

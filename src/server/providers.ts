@@ -3,6 +3,7 @@ export interface RealtimeProvider {
   exchangeSdp(token: string, sdpOffer: string): Promise<{ sdpAnswer: string; callId: string | null }>
   sidebandUrl(callId: string): string
   sidebandHeaders(): Record<string, string>
+  toString(): string
 }
 
 class OpenAIProvider implements RealtimeProvider {
@@ -10,6 +11,10 @@ class OpenAIProvider implements RealtimeProvider {
 
   constructor(apiKey: string) {
     this.#apiKey = apiKey
+  }
+
+  toString(): string {
+    return 'OpenAIProvider with key ending in ' + this.#apiKey.slice(-4)
   }
 
   async getEphemeralToken(sessionConfig: object): Promise<string> {
@@ -25,8 +30,10 @@ class OpenAIProvider implements RealtimeProvider {
       const text = await res.text()
       throw new Error(`OpenAI client_secrets failed (${res.status}): ${text}`)
     }
-    const data = await res.json() as { client_secret: { value: string } }
-    return data.client_secret.value
+    // const data = await res.json() as { client_secret: { value: string } }
+    const data = await res.json() as { value: string }
+
+    return data.value
   }
 
   async exchangeSdp(token: string, sdpOffer: string): Promise<{ sdpAnswer: string; callId: string | null }> {
@@ -65,6 +72,10 @@ class AzureProvider implements RealtimeProvider {
     this.#apiKey = apiKey
     this.#endpoint = endpoint
     this.#host = new URL(endpoint).host
+  }
+
+  toString(): string {
+    return 'AzureProvider with key ending in ' + this.#apiKey.slice(-4) + ' and endpoint ' + this.#endpoint
   }
 
   async getEphemeralToken(sessionConfig: object): Promise<string> {
