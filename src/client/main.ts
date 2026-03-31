@@ -79,6 +79,7 @@ type RealtimeEvent = { type: string; [k: string]: unknown }
 const allEvents: RealtimeEvent[] = []
 const eventsByGroup = new Map<string, number[]>()
 const activeGroups = new Set<string>()
+const expandedEvents = new Set<number>()
 
 // Initialize filters from hardcoded checkboxes
 for (const cb of eventFiltersDiv.querySelectorAll<HTMLInputElement>('input[type=checkbox]')) {
@@ -94,6 +95,54 @@ function getGroup(type: string): string {
   return type.split('.')[0]
 }
 
+function createEventBox(event: RealtimeEvent, index: number): HTMLDivElement {
+  const group = getGroup(event.type)
+  const dotIdx = event.type.indexOf('.')
+  const groupName = dotIdx >= 0 ? event.type.substring(0, dotIdx) : event.type
+  const subtype = dotIdx >= 0 ? event.type.substring(dotIdx + 1) : ''
+  const isExpanded = expandedEvents.has(index)
+
+  const box = document.createElement('div')
+  box.className = `event-box event-group-${group}${isExpanded ? ' expanded' : ''}`
+  box.dataset.eventIndex = String(index)
+
+  const header = document.createElement('div')
+  header.className = 'event-box-header'
+
+  const toggle = document.createElement('span')
+  toggle.className = `event-toggle${isExpanded ? ' expanded' : ''}`
+  toggle.textContent = '▶'
+
+  const pill = document.createElement('span')
+  pill.className = `event-pill event-pill-${group}`
+  pill.textContent = groupName
+
+  const sub = document.createElement('span')
+  sub.className = 'event-subtype'
+  sub.textContent = subtype
+
+  header.append(toggle, pill, sub)
+
+  const body = document.createElement('div')
+  body.className = 'event-body'
+  body.textContent = JSON.stringify(event, null, 2)
+
+  header.addEventListener('click', () => {
+    if (expandedEvents.has(index)) {
+      expandedEvents.delete(index)
+      box.classList.remove('expanded')
+      toggle.classList.remove('expanded')
+    } else {
+      expandedEvents.add(index)
+      box.classList.add('expanded')
+      toggle.classList.add('expanded')
+    }
+  })
+
+  box.append(header, body)
+  return box
+}
+
 function rebuildEventLog(): void {
   eventsDiv.innerHTML = ''
   const indices: number[] = []
@@ -103,12 +152,27 @@ function rebuildEventLog(): void {
   }
   indices.sort((a, b) => a - b)
   for (const i of indices) {
-    const line = document.createElement('div')
-    line.textContent = JSON.stringify(allEvents[i])
-    eventsDiv.appendChild(line)
+    eventsDiv.appendChild(createEventBox(allEvents[i], i))
   }
   eventsDiv.scrollTop = eventsDiv.scrollHeight
 }
+
+// Expand/collapse all buttons
+document.getElementById('expand-all')!.addEventListener('click', () => {
+  eventsDiv.querySelectorAll<HTMLDivElement>('.event-box').forEach(box => {
+    const idx = Number(box.dataset.eventIndex)
+    expandedEvents.add(idx)
+    box.classList.add('expanded')
+    box.querySelector('.event-toggle')!.classList.add('expanded')
+  })
+})
+document.getElementById('collapse-all')!.addEventListener('click', () => {
+  expandedEvents.clear()
+  eventsDiv.querySelectorAll<HTMLDivElement>('.event-box').forEach(box => {
+    box.classList.remove('expanded')
+    box.querySelector('.event-toggle')!.classList.remove('expanded')
+  })
+})
 
 let totalInputTokens = 0
 let totalInputTextTokens = 0
@@ -139,9 +203,7 @@ function handleEventLogging(event: RealtimeEvent): void {
   groupIndices.push(idx)
 
   if (activeGroups.has(group)) {
-    const line = document.createElement('div')
-    line.textContent = JSON.stringify(event)
-    eventsDiv.appendChild(line)
+    eventsDiv.appendChild(createEventBox(event, idx))
     eventsDiv.scrollTop = eventsDiv.scrollHeight
   }
 }
@@ -294,6 +356,7 @@ startBtn.addEventListener('click', async () => {
   setSpeaking(false)
   allEvents.length = 0
   eventsByGroup.clear()
+  expandedEvents.clear()
   activeGroups.clear()
   for (const cb of eventFiltersDiv.querySelectorAll<HTMLInputElement>('input[type=checkbox]')) {
     cb.checked = true
@@ -324,8 +387,19 @@ startBtn.addEventListener('click', async () => {
 
 document.querySelectorAll<HTMLButtonElement>('.copy-btn').forEach(btn => {
   btn.addEventListener('click', () => {
-    const el = document.getElementById(btn.dataset.target!)!
-    navigator.clipboard.writeText(el.innerText).then(() => {
+    let text: string
+    if (btn.dataset.target === 'events') {
+      const indices: number[] = []
+      for (const group of activeGroups) {
+        const gi = eventsByGroup.get(group)
+        if (gi) indices.push(...gi)
+      }
+      indices.sort((a, b) => a - b)
+      text = indices.map(i => JSON.stringify(allEvents[i], null, 2)).join('\n\n')
+    } else {
+      text = document.getElementById(btn.dataset.target!)!.innerText
+    }
+    navigator.clipboard.writeText(text).then(() => {
       btn.classList.add('copied')
       btn.textContent = '✓'
       setTimeout(() => { btn.classList.remove('copied'); btn.textContent = '⧉' }, 1500)

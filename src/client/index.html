@@ -26,17 +26,78 @@
     #status { font-weight: bold; color: #555; }
     #events {
       border: 1px solid #ccc; padding: 0.5rem;
-      height: 300px; overflow-y: auto;
-      font-size: 0.85rem; font-family: monospace; white-space: pre-wrap;
+      height: 400px; overflow-y: auto;
     }
     #event-filters {
-      display: flex; flex-wrap: wrap; gap: 0.25rem 0.75rem;
+      display: flex; flex-wrap: wrap; gap: 0.25rem 0.5rem;
       font-size: 0.8rem; margin-bottom: 0.35rem;
     }
     #event-filters label {
       display: flex; align-items: center; gap: 0.2rem;
       cursor: pointer; user-select: none;
+      padding: 0.15rem 0.5rem; border-radius: 999px;
     }
+    #event-filters label[data-group="session"]            { background: #dbeafe; }
+    #event-filters label[data-group="input_audio_buffer"] { background: #fce7f3; }
+    #event-filters label[data-group="conversation"]       { background: #d1fae5; }
+    #event-filters label[data-group="response"]           { background: #fef3c7; }
+    #event-filters label[data-group="output_audio_buffer"]{ background: #ede9fe; }
+    #event-filters label[data-group="rate_limits"]        { background: #fee2e2; }
+
+    /* ── Event box structure ── */
+    .event-box {
+      border-radius: 6px; margin-bottom: 4px; overflow: hidden;
+      font-family: monospace; font-size: 0.82rem;
+    }
+    .event-box-header {
+      display: flex; align-items: center; gap: 0.4rem;
+      padding: 0.3rem 0.5rem; cursor: pointer; user-select: none;
+    }
+    .event-toggle {
+      font-size: 0.65rem; flex-shrink: 0; width: 1em; text-align: center;
+      transition: transform 0.15s; display: inline-block;
+    }
+    .event-toggle.expanded { transform: rotate(90deg); }
+    .event-pill {
+      display: inline-block; padding: 0.1rem 0.5rem; border-radius: 999px;
+      color: #fff; font-size: 0.75rem; font-weight: 600;
+      white-space: nowrap; flex-shrink: 0;
+    }
+    .event-subtype {
+      font-size: 0.75rem; color: #555;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .event-body {
+      display: none;
+      padding: 0.4rem 0.5rem 0.5rem 1.8rem;
+      font-size: 0.78rem; white-space: pre-wrap; word-break: break-all;
+      border-top: 1px solid rgba(0,0,0,0.08);
+      max-height: 300px; overflow-y: auto;
+    }
+    .event-box.expanded .event-body { display: block; }
+
+    /* ── Per-group colors ── */
+    .event-group-session              { background: #dbeafe; }
+    .event-group-input_audio_buffer   { background: #fce7f3; }
+    .event-group-conversation         { background: #d1fae5; }
+    .event-group-response             { background: #fef3c7; }
+    .event-group-output_audio_buffer  { background: #ede9fe; }
+    .event-group-rate_limits          { background: #fee2e2; }
+    .event-pill-session              { background: #2563eb; }
+    .event-pill-input_audio_buffer   { background: #db2777; }
+    .event-pill-conversation         { background: #059669; }
+    .event-pill-response             { background: #d97706; }
+    .event-pill-output_audio_buffer  { background: #7c3aed; }
+    .event-pill-rate_limits          { background: #dc2626; }
+
+    /* ── Event toolbar ── */
+    .event-toolbar { display: flex; gap: 0.4rem; align-items: center; }
+    .event-toolbar button {
+      background: none; border: 1px solid #ccc; border-radius: 4px;
+      cursor: pointer; font-size: 0.8rem; padding: 0.1rem 0.35rem;
+      color: #666; line-height: 1;
+    }
+    .event-toolbar button:hover { background: #eee; color: #333; }
 
     /* ── Scroll panels in col 2 ── */
     .panel { margin-bottom: 1.25rem; }
@@ -167,15 +228,19 @@
       </div>
       <div class="panel-header">
         <h3 class="panel-title">Event Log</h3>
-        <button class="copy-btn" data-target="events" title="Copy to clipboard">⧉</button>
+        <div class="event-toolbar">
+          <button id="expand-all" title="Expand all">⊞</button>
+          <button id="collapse-all" title="Collapse all">⊟</button>
+          <button class="copy-btn" data-target="events" title="Copy to clipboard">⧉</button>
+        </div>
       </div>
       <div id="event-filters">
-        <label><input type="checkbox" checked data-group="session">session</label>
-        <label><input type="checkbox" checked data-group="input_audio_buffer">input_audio_buffer</label>
-        <label><input type="checkbox" checked data-group="conversation">conversation</label>
-        <label><input type="checkbox" checked data-group="response">response</label>
-        <label><input type="checkbox" checked data-group="output_audio_buffer">output_audio_buffer</label>
-        <label><input type="checkbox" checked data-group="rate_limits">rate_limits</label>
+        <label data-group="session"><input type="checkbox" checked data-group="session">session</label>
+        <label data-group="input_audio_buffer"><input type="checkbox" checked data-group="input_audio_buffer">input_audio_buffer</label>
+        <label data-group="conversation"><input type="checkbox" checked data-group="conversation">conversation</label>
+        <label data-group="response"><input type="checkbox" checked data-group="response">response</label>
+        <label data-group="output_audio_buffer"><input type="checkbox" checked data-group="output_audio_buffer">output_audio_buffer</label>
+        <label data-group="rate_limits"><input type="checkbox" checked data-group="rate_limits">rate_limits</label>
       </div>
       <div id="events"></div>
       <div id="system-prompt-panel" class="panel">
