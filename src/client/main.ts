@@ -80,6 +80,16 @@ const allEvents: RealtimeEvent[] = []
 const eventsByGroup = new Map<string, number[]>()
 const activeGroups = new Set<string>()
 
+// Initialize filters from hardcoded checkboxes
+for (const cb of eventFiltersDiv.querySelectorAll<HTMLInputElement>('input[type=checkbox]')) {
+  if (cb.checked) activeGroups.add(cb.dataset.group!)
+  cb.addEventListener('change', () => {
+    if (cb.checked) activeGroups.add(cb.dataset.group!)
+    else activeGroups.delete(cb.dataset.group!)
+    rebuildEventLog()
+  })
+}
+
 function getGroup(type: string): string {
   return type.split('.')[0]
 }
@@ -125,21 +135,6 @@ function handleEventLogging(event: RealtimeEvent): void {
   if (!groupIndices) {
     groupIndices = []
     eventsByGroup.set(group, groupIndices)
-    activeGroups.add(group)
-
-    const label = document.createElement('label')
-    const cb = document.createElement('input')
-    cb.type = 'checkbox'
-    cb.checked = true
-    cb.dataset.group = group
-    cb.addEventListener('change', () => {
-      if (cb.checked) activeGroups.add(group)
-      else activeGroups.delete(group)
-      rebuildEventLog()
-    })
-    label.appendChild(cb)
-    label.appendChild(document.createTextNode(group))
-    eventFiltersDiv.appendChild(label)
   }
   groupIndices.push(idx)
 
@@ -228,7 +223,7 @@ function handleIntentClassification(event: { type: string; [k: string]: unknown 
         conversation: 'none',
         output_modalities: ['text'],
         metadata: { topic: 'classification' },
-        instructions: "You are a linguist classifying the intent of messages. Carefully analyze the last user message and reply with exactly one word from: question, statement, command, greeting, other.",
+        instructions: "You are a linguist classifying the intent of messages. Carefully analyze the user message and find the label that best matches the intent of the message. The possible labels are: question, statement, command, greeting, other. Always reply with exactly one category.",
         input: [{ type: 'item_reference', id: (event.item as { id: string }).id }],
       },
     })
@@ -300,7 +295,10 @@ startBtn.addEventListener('click', async () => {
   allEvents.length = 0
   eventsByGroup.clear()
   activeGroups.clear()
-  eventFiltersDiv.innerHTML = ''
+  for (const cb of eventFiltersDiv.querySelectorAll<HTMLInputElement>('input[type=checkbox]')) {
+    cb.checked = true
+    activeGroups.add(cb.dataset.group!)
+  }
   eventsDiv.innerHTML = ''
   transcriptionDiv.innerHTML = ''
   outputTranscriptionDiv.innerHTML = ''

@@ -169,7 +169,14 @@
         <h3 class="panel-title">Event Log</h3>
         <button class="copy-btn" data-target="events" title="Copy to clipboard">⧉</button>
       </div>
-      <div id="event-filters"></div>
+      <div id="event-filters">
+        <label><input type="checkbox" checked data-group="session">session</label>
+        <label><input type="checkbox" checked data-group="input_audio_buffer">input_audio_buffer</label>
+        <label><input type="checkbox" checked data-group="conversation">conversation</label>
+        <label><input type="checkbox" checked data-group="response">response</label>
+        <label><input type="checkbox" checked data-group="output_audio_buffer">output_audio_buffer</label>
+        <label><input type="checkbox" checked data-group="rate_limits">rate_limits</label>
+      </div>
       <div id="events"></div>
       <div id="system-prompt-panel" class="panel">
         <div class="panel-header">
