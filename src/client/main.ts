@@ -6,7 +6,6 @@ const stopBtn = document.getElementById('stop') as HTMLButtonElement
 const statusDiv = document.getElementById('status') as HTMLDivElement
 const eventsDiv = document.getElementById('events') as HTMLDivElement
 const eventFiltersDiv = document.getElementById('event-filters') as HTMLDivElement
-const outputTranscriptionDiv = document.getElementById('output-transcription') as HTMLDivElement
 const transcriptionDiv = document.getElementById('transcription') as HTMLDivElement
 const classificationsDiv = document.getElementById('classifications') as HTMLDivElement
 const inputTotalEl = document.getElementById('input-total') as HTMLSpanElement
@@ -225,17 +224,27 @@ function handleConversationVisualization(event: RealtimeEvent): void {
  * 
  * @param event The event object containing transcription updates and other related events.
  */
+function createTranscriptMsg(role: 'user' | 'bot'): HTMLSpanElement {
+  const container = document.createElement('div')
+  container.className = `transcript-msg transcript-msg-${role}`
+  const pill = document.createElement('span')
+  pill.className = `transcript-pill transcript-${role}`
+  pill.textContent = role === 'user' ? '🧑 User' : '🤖 Bot'
+  const textSpan = document.createElement('span')
+  textSpan.className = 'transcript-text'
+  container.append(pill, textSpan)
+  transcriptionDiv.appendChild(container)
+  return textSpan
+}
+
 let currentOutputTranscriptionSpan: HTMLSpanElement | null = null
 function handleOutputTranscriptionEvents(event: { type: string; [k: string]: unknown }): void {
   if (event.type === 'response.output_audio_transcript.delta') {
     if (!currentOutputTranscriptionSpan) {
-      currentOutputTranscriptionSpan = document.createElement('span')
-      outputTranscriptionDiv.appendChild(currentOutputTranscriptionSpan)
+      currentOutputTranscriptionSpan = createTranscriptMsg('bot')
     }
     currentOutputTranscriptionSpan.textContent += (event.delta as string) ?? ''
-
   } else if (event.type === 'response.output_audio_transcript.done') {
-    outputTranscriptionDiv.appendChild(document.createElement('hr'))
     currentOutputTranscriptionSpan = null
   }
 }
@@ -250,24 +259,20 @@ let currentInputTranscriptionUtteranceSpan: HTMLSpanElement | null = null
 function handleInputTranscriptionEvents(event: { type: string; [k: string]: unknown }): void {
   if (event.type === 'conversation.item.input_audio_transcription.delta') {
     if (!currentInputTranscriptionUtteranceSpan) {
-      currentInputTranscriptionUtteranceSpan = document.createElement('span')
-      transcriptionDiv.appendChild(currentInputTranscriptionUtteranceSpan)
+      currentInputTranscriptionUtteranceSpan = createTranscriptMsg('user')
     }
     currentInputTranscriptionUtteranceSpan.textContent += (event.delta as string) ?? ''
 
   } else if (event.type === 'conversation.item.input_audio_transcription.completed') {
     if (!currentInputTranscriptionUtteranceSpan) {
-      currentInputTranscriptionUtteranceSpan = document.createElement('span')
+      currentInputTranscriptionUtteranceSpan = createTranscriptMsg('user')
       currentInputTranscriptionUtteranceSpan.textContent = (event.transcript as string) ?? ''
-      transcriptionDiv.appendChild(currentInputTranscriptionUtteranceSpan)
     }
-    transcriptionDiv.appendChild(document.createElement('hr'))
     currentInputTranscriptionUtteranceSpan = null
 
   } else if (event.type === 'conversation.item.input_audio_transcription.failed') {
-    const errText = document.createTextNode('==UNABLE TO TRANSCRIBE==')
-    transcriptionDiv.appendChild(errText)
-    transcriptionDiv.appendChild(document.createElement('hr'))
+    const span = createTranscriptMsg('user')
+    span.textContent = '==UNABLE TO TRANSCRIBE=='
     currentInputTranscriptionUtteranceSpan = null
   }
 }
@@ -364,7 +369,6 @@ startBtn.addEventListener('click', async () => {
   }
   eventsDiv.innerHTML = ''
   transcriptionDiv.innerHTML = ''
-  outputTranscriptionDiv.innerHTML = ''
   classificationsDiv.innerHTML = ''
   currentOutputTranscriptionSpan = null
   currentInputTranscriptionUtteranceSpan = null

@@ -102,11 +102,26 @@
     /* ── Scroll panels in col 2 ── */
     .panel { margin-bottom: 1.25rem; }
     .panel-title { margin: 0 0 0.4rem 0; font-size: 1rem; color: #444; }
-    #output-transcription, #transcription {
+    #transcription {
       border: 1px solid #aac; padding: 0.5rem;
-      min-height: 100px; max-height: 200px;
+      min-height: 100px; max-height: 300px;
       overflow-y: auto; font-size: 1rem;
     }
+    .transcript-msg {
+      display: grid; grid-template-columns: 5.5rem 1fr;
+      gap: 0.4rem; align-items: start; margin-bottom: 0.5rem;
+      border-radius: 6px; padding: 0.4rem 0.5rem;
+    }
+    .transcript-msg-user { background: #dbeafe; }
+    .transcript-msg-bot  { background: #d1fae5; }
+    .transcript-pill {
+      display: inline-block; padding: 0.1rem 0.5rem; border-radius: 999px;
+      color: #fff; font-size: 0.75rem; font-weight: 600;
+      white-space: nowrap; text-align: center; justify-self: start;
+      margin-top: 0.15rem;
+    }
+    .transcript-user { background: #2563eb; }
+    .transcript-bot  { background: #059669; }
     #classifications {
       border: 1px solid #cca; padding: 0.5rem;
       min-height: 60px; max-height: 150px;
@@ -255,17 +270,10 @@
     <div class="col">
       <section class="panel">
         <div class="panel-header">
-          <h3 class="panel-title">Input Transcription</h3>
+          <h3 class="panel-title">Transcription</h3>
           <button class="copy-btn" data-target="transcription" title="Copy to clipboard">⧉</button>
         </div>
         <div id="transcription"></div>
-      </section>
-      <section class="panel">
-        <div class="panel-header">
-          <h3 class="panel-title">Output Transcription</h3>
-          <button class="copy-btn" data-target="output-transcription" title="Copy to clipboard">⧉</button>
-        </div>
-        <div id="output-transcription"></div>
       </section>
       <section class="panel">
         <div class="panel-header">
