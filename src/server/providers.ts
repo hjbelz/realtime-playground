@@ -1,6 +1,5 @@
 export interface RealtimeProvider {
-  getEphemeralToken(sessionConfig: object): Promise<string>
-  exchangeSdp(token: string, sdpOffer: string): Promise<{ sdpAnswer: string; callId: string | null }>
+  exchangeSdp(sdpOffer: string, sessionConfig: object): Promise<{ sdpAnswer: string; callId: string | null }>
   sidebandUrl(callId: string): string
   sidebandHeaders(): Record<string, string>
   toString(): string
@@ -17,33 +16,17 @@ class OpenAIProvider implements RealtimeProvider {
     return 'OpenAIProvider with key ending in ' + this.#apiKey.slice(-4)
   }
 
-  async getEphemeralToken(sessionConfig: object): Promise<string> {
-    const res = await fetch('https://api.openai.com/v1/realtime/client_secrets', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${this.#apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ session: sessionConfig }),
-    })
-    if (!res.ok) {
-      const text = await res.text()
-      throw new Error(`OpenAI client_secrets failed (${res.status}): ${text}`)
-    }
-    // const data = await res.json() as { client_secret: { value: string } }
-    const data = await res.json() as { value: string }
+  async exchangeSdp(sdpOffer: string, sessionConfig: object): Promise<{ sdpAnswer: string; callId: string | null }> {
+    const fd = new FormData()
+    fd.set('sdp', sdpOffer)
+    fd.set('session', JSON.stringify(sessionConfig))
 
-    return data.value
-  }
-
-  async exchangeSdp(token: string, sdpOffer: string): Promise<{ sdpAnswer: string; callId: string | null }> {
     const res = await fetch('https://api.openai.com/v1/realtime/calls', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/sdp',
+        'Authorization': `Bearer ${this.#apiKey}`,
       },
-      body: sdpOffer,
+      body: fd,
     })
     if (!res.ok) {
       const text = await res.text()
@@ -78,8 +61,9 @@ class AzureProvider implements RealtimeProvider {
     return 'AzureProvider with key ending in ' + this.#apiKey.slice(-4) + ' and endpoint ' + this.#endpoint
   }
 
-  async getEphemeralToken(sessionConfig: object): Promise<string> {
-    const res = await fetch(`${this.#endpoint}/openai/v1/realtime/client_secrets`, {
+  async exchangeSdp(sdpOffer: string, sessionConfig: object): Promise<{ sdpAnswer: string; callId: string | null }> {
+    // Azure uses ephemeral tokens: get token first, then exchange SDP
+    const tokenRes = await fetch(`${this.#endpoint}/openai/v1/realtime/client_secrets`, {
       method: 'POST',
       headers: {
         'api-key': this.#apiKey,
@@ -87,15 +71,13 @@ class AzureProvider implements RealtimeProvider {
       },
       body: JSON.stringify({ session: sessionConfig }),
     })
-    if (!res.ok) {
-      const text = await res.text()
-      throw new Error(`Azure client_secrets failed (${res.status}): ${text}`)
+    if (!tokenRes.ok) {
+      const text = await tokenRes.text()
+      throw new Error(`Azure client_secrets failed (${tokenRes.status}): ${text}`)
     }
-    const data = await res.json() as { value: string }
-    return data.value
-  }
+    const tokenData = await tokenRes.json() as { value: string }
+    const token = tokenData.value
 
-  async exchangeSdp(token: string, sdpOffer: string): Promise<{ sdpAnswer: string; callId: string | null }> {
     const res = await fetch(`${this.#endpoint}/openai/v1/realtime/calls`, {
       method: 'POST',
       headers: {

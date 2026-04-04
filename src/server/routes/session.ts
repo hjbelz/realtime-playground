@@ -43,17 +43,12 @@ export async function sessionRoutes(fastify: FastifyInstance): Promise<void> {
     const sessionConfig = buildSessionConfig(instructions)
 
     try {
-      // Step 1: Get ephemeral token (embeds session config)
-      fastify.log.info('Attempting to get ephemeral token from provider: ' + provider.toString())
-      const token = await provider.getEphemeralToken(sessionConfig)
-      fastify.log.info('Ephemeral token obtained')
-
-      // Step 2: Exchange SDP using the ephemeral token
-      fastify.log.info('Attempting to exchange SDP with provider: ' + provider.toString())     
-      const { sdpAnswer, callId } = await provider.exchangeSdp(token, sdpOffer)
+      // Step 1: Exchange SDP (provider handles auth internally)
+      fastify.log.info('Attempting to exchange SDP with provider: ' + provider.toString())
+      const { sdpAnswer, callId } = await provider.exchangeSdp(sdpOffer, sessionConfig)
       fastify.log.info({ callId }, 'SDP exchange complete')
 
-      // Step 3: Open sideband for server-side monitoring
+      // Step 2: Open sideband for server-side monitoring
       if (callId) {
         openSideband(
           provider.sidebandUrl(callId),
