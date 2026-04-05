@@ -3,6 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Audiowide&display=swap" rel="stylesheet">
   <title>OpenAI Realtime Voice Demo</title>
   <style>
     /* ── Reset centred column ── */
@@ -13,6 +16,15 @@
       box-sizing: border-box;
     }
 
+    /* ── Heading with custom font ── */
+    h1 {
+      font-family: "Audiowide", sans-serif;
+      font-weight: 400;
+      font-size: 3rem;
+      font-style: normal;
+      color: hsl(0, 0%, 45%);
+    }
+
     /* ── Two-column page grid ── */
     #app-grid {
       display: grid;
@@ -21,9 +33,33 @@
       align-items: start;
     }
 
-    /* ── Existing panel styles (keep, adjust margins) ── */
-    #controls { display: flex; gap: 0.75rem; align-items: center; }
-    #status { font-weight: bold; color: #555; }
+    /* ── Connection info bar ── */
+    #connection-info {
+      display: flex; gap: 1.5rem; align-items: center;
+      font-size: 0.85rem; color: #666; margin-bottom: 0.75rem;
+    }
+    #connection-info .info-label { color: #999; }
+    #connection-info .info-value { font-weight: 600; color: #333; }
+    #provider-badge {
+      font-size: 0.8rem; font-weight: 600; padding: 0.15rem 0.55rem;
+      border-radius: 4px; color: #fff; display: none;
+    }
+    #provider-badge.openai { background: #10a37f; display: inline-block; }
+    #provider-badge.azure { background: #0078d4; display: inline-block; }
+    #status { font-weight: 600; }
+    #status.disconnected { color: #999; }
+    #status.connecting { color: #d97706; }
+    #status.connected { color: #22c55e; }
+    #status.error { color: #ef4444; }
+
+    /* ── Control panel (buttons + amplitude bars) ── */
+    #control-panel {
+      display: flex; gap: 0.75rem; align-items: stretch;
+      background: #e5e7eb; border-radius: 8px; padding: 0.6rem;
+      margin-bottom: 0.75rem;
+    }
+    #controls { display: flex; flex-direction: column; gap: 0.5rem; flex-shrink: 0; }
+    #conversation-viz { flex: 1; display: flex; flex-direction: column; gap: 0.4rem; justify-content: center; }
     #events {
       border: 1px solid #ccc; padding: 0.5rem;
       height: 400px; overflow-y: auto;
@@ -154,12 +190,11 @@
     /* ── Cost under token count ── */
     .token-col .cost { font-size: 0.8rem; color: #888; margin-top: 0.25rem; }
 
-    /* ── Conversation visualizer ── */
-    #conversation-viz { margin: 0.75rem 0; }
-    .conv-row { display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.4rem; }
-    .conv-label { font-size: 0.8rem; color: #999; width: 60px; text-align: right; flex-shrink: 0; transition: color 0.15s; }
-    .conv-label.active { color: #22c55e; font-weight: bold; }
-    .amp-track { flex: 1; height: 10px; background: #e5e7eb; border-radius: 5px; overflow: hidden; }
+    /* ── Conversation visualizer (amplitude bars) ── */
+    .conv-row { display: flex; align-items: center; gap: 0.5rem; }
+    .conv-icon { font-size: 1.1rem; flex-shrink: 0; opacity: 0.4; transition: opacity 0.15s; }
+    .conv-icon.active { opacity: 1; }
+    .amp-track { flex: 1; height: 10px; background: #fff; border-radius: 5px; overflow: hidden; }
     .amp-bar { height: 100%; width: 0%; background: #d1d5db; border-radius: 5px; transition: width 0.04s linear; }
     .amp-bar.active { background: #22c55e; }
 
@@ -205,20 +240,25 @@
   <div id="app-grid">
     <!-- Column 1 -->
     <div class="col">
-      <h1>OpenAI Realtime Voice Demo</h1>
-      <div id="controls">
-        <button id="start"><span class="btn-icon">▶</span> Start</button>
-        <button id="stop" disabled><span class="btn-icon">■</span> Stop</button>
-        <div id="status">Idle</div>
+      <h1>OpenAI Realtime Demo</h1>
+      <div id="connection-info">
+        <span><span class="info-label">Endpoint: </span><span id="provider-badge"></span></span>
+        <span><span class="info-label">Connection: </span><span id="status" class="info-value disconnected">Disconnected</span></span>
       </div>
-      <div id="conversation-viz">
-        <div class="conv-row">
-          <span id="conv-mic-label" class="conv-label">Listening</span>
-          <div class="amp-track"><div id="conv-mic-bar" class="amp-bar"></div></div>
+      <div id="control-panel">
+        <div id="controls">
+          <button id="start"><span class="btn-icon">▶</span> Start</button>
+          <button id="stop" disabled><span class="btn-icon">■</span> Stop</button>
         </div>
-        <div class="conv-row">
-          <span id="conv-model-label" class="conv-label">Speaking</span>
-          <div class="amp-track"><div id="conv-model-bar" class="amp-bar"></div></div>
+        <div id="conversation-viz">
+          <div class="conv-row">
+            <span id="conv-mic-icon" class="conv-icon">🎤</span>
+            <div class="amp-track"><div id="conv-mic-bar" class="amp-bar"></div></div>
+          </div>
+          <div class="conv-row">
+            <span id="conv-model-icon" class="conv-icon">🔊</span>
+            <div class="amp-track"><div id="conv-model-bar" class="amp-bar"></div></div>
+          </div>
         </div>
       </div>
       <div id="token-usage">

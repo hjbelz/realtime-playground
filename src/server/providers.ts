@@ -1,4 +1,5 @@
 export interface RealtimeProvider {
+  readonly name: 'OpenAI' | 'Azure'
   exchangeSdp(sdpOffer: string, sessionConfig: object): Promise<{ sdpAnswer: string; callId: string | null }>
   sidebandUrl(callId: string): string
   sidebandHeaders(): Record<string, string>
@@ -6,6 +7,7 @@ export interface RealtimeProvider {
 }
 
 class OpenAIProvider implements RealtimeProvider {
+  readonly name = 'OpenAI' as const
   #apiKey: string
 
   constructor(apiKey: string) {
@@ -47,6 +49,7 @@ class OpenAIProvider implements RealtimeProvider {
 }
 
 class AzureProvider implements RealtimeProvider {
+  readonly name = 'Azure' as const
   #apiKey: string
   #endpoint: string
   #host: string

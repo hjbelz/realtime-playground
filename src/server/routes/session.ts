@@ -37,6 +37,10 @@ export async function sessionRoutes(fastify: FastifyInstance): Promise<void> {
     done(null, body)
   })
 
+  fastify.get('/provider', async (_request, reply) => {
+    return reply.send({ provider: provider.name })
+  })
+
   fastify.post('/session', async (request, reply) => {
     const sdpOffer = request.body as string
     const instructions = (request.query as Record<string, string>).instructions || undefined

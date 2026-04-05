@@ -4,6 +4,12 @@ import { onDataChannelMessage, sendEvent } from './datachannel'
 const startBtn = document.getElementById('start') as HTMLButtonElement
 const stopBtn = document.getElementById('stop') as HTMLButtonElement
 const statusDiv = document.getElementById('status') as HTMLDivElement
+const providerBadge = document.getElementById('provider-badge') as HTMLDivElement
+
+fetch('/api/provider').then(r => r.json()).then((data: { provider: string }) => {
+  providerBadge.textContent = data.provider
+  providerBadge.className = data.provider.toLowerCase()
+})
 const eventsDiv = document.getElementById('events') as HTMLDivElement
 const eventFiltersDiv = document.getElementById('event-filters') as HTMLDivElement
 const transcriptionDiv = document.getElementById('transcription') as HTMLDivElement
@@ -18,8 +24,8 @@ const inputCostEl  = document.getElementById('input-cost')  as HTMLElement
 const outputCostEl = document.getElementById('output-cost') as HTMLElement
 const convMicBar    = document.getElementById('conv-mic-bar')    as HTMLDivElement
 const convModelBar  = document.getElementById('conv-model-bar')  as HTMLDivElement
-const convMicLabel  = document.getElementById('conv-mic-label')  as HTMLSpanElement
-const convModelLabel= document.getElementById('conv-model-label')as HTMLSpanElement
+const convMicIcon   = document.getElementById('conv-mic-icon')   as HTMLSpanElement
+const convModelIcon = document.getElementById('conv-model-icon') as HTMLSpanElement
 const systemPromptEl = document.getElementById('system-prompt') as HTMLTextAreaElement
 
 const PRICE_TEXT_INPUT   = 4.00  / 1_000_000
@@ -64,13 +70,13 @@ let speakingActive  = false
 
 function setListening(active: boolean): void {
   listeningActive = active
-  convMicLabel.classList.toggle('active', active)
+  convMicIcon.classList.toggle('active', active)
   convMicBar.classList.toggle('active', active)
 }
 
 function setSpeaking(active: boolean): void {
   speakingActive = active
-  convModelLabel.classList.toggle('active', active)
+  convModelIcon.classList.toggle('active', active)
   convModelBar.classList.toggle('active', active)
 }
 
@@ -182,6 +188,11 @@ let totalOutputAudioTokens = 0
 
 function setStatus(text: string): void {
   statusDiv.textContent = text
+  statusDiv.className = 'info-value'
+  if (text === 'Disconnected') statusDiv.classList.add('disconnected')
+  else if (text === 'Connecting...') statusDiv.classList.add('connecting')
+  else if (text === 'Connected') statusDiv.classList.add('connected')
+  else statusDiv.classList.add('error')
 }
 
 /**
@@ -419,5 +430,5 @@ stopBtn.addEventListener('click', () => {
   stopBtn.disabled = true
   startBtn.disabled = false
   systemPromptEl.disabled = false
-  setStatus('Idle')
+  setStatus('Disconnected')
 })
