@@ -54,14 +54,16 @@
     #status.connected { color: #22c55e; }
     #status.error { color: #ef4444; }
 
-    /* ── Control panel (buttons + amplitude bars) ── */
+    /* ── Control panel (button + emoji + bar per row) ── */
     #control-panel {
-      display: flex; gap: 0.75rem; align-items: stretch;
+      display: flex; flex-direction: column; gap: 0.5rem;
       background: #e5e7eb; border-radius: 8px; padding: 0.6rem;
       margin-bottom: 0.75rem;
     }
-    #controls { display: flex; flex-direction: column; gap: 0.5rem; flex-shrink: 0; }
-    #conversation-viz { flex: 1; display: flex; flex-direction: column; gap: 0.5rem; justify-content: center; align-self: center; }
+    .control-row {
+      display: flex; align-items: center; gap: 0.6rem;
+    }
+    .control-row button { flex-shrink: 0; }
     #events {
       border: 1px solid #ccc; padding: 0.5rem;
       height: 400px; overflow-y: auto;
@@ -192,8 +194,7 @@
     /* ── Cost under token count ── */
     .token-col .cost { font-size: 0.8rem; color: #888; margin-top: 0.25rem; }
 
-    /* ── Conversation visualizer (amplitude bars) ── */
-    .conv-row { display: flex; align-items: center; gap: 0.5rem; }
+    /* ── Amplitude bar icons ── */
     .conv-icon { font-size: 1.1rem; flex-shrink: 0; opacity: 0.4; transition: opacity 0.15s; }
     .conv-icon.active { opacity: 1; }
     .amp-track { flex: 1; height: 14px; background: #fff; border-radius: 7px; overflow: hidden; }
@@ -248,19 +249,15 @@
         <span><span class="info-label">Connection: </span><span id="status" class="info-value disconnected">Disconnected</span></span>
       </div>
       <div id="control-panel">
-        <div id="controls">
+        <div class="control-row">
           <button id="start"><span class="btn-icon">▶</span> Start</button>
-          <button id="stop" disabled><span class="btn-icon">■</span> Stop</button>
+          <span id="conv-mic-icon" class="conv-icon">🎤</span>
+          <div class="amp-track"><div id="conv-mic-bar" class="amp-bar"></div></div>
         </div>
-        <div id="conversation-viz">
-          <div class="conv-row">
-            <span id="conv-mic-icon" class="conv-icon">🎤</span>
-            <div class="amp-track"><div id="conv-mic-bar" class="amp-bar"></div></div>
-          </div>
-          <div class="conv-row">
-            <span id="conv-model-icon" class="conv-icon">🔊</span>
-            <div class="amp-track"><div id="conv-model-bar" class="amp-bar"></div></div>
-          </div>
+        <div class="control-row">
+          <button id="stop" disabled><span class="btn-icon">■</span> Stop</button>
+          <span id="conv-model-icon" class="conv-icon">🔊</span>
+          <div class="amp-track"><div id="conv-model-bar" class="amp-bar"></div></div>
         </div>
       </div>
       <div id="token-usage">
