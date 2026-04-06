@@ -8,7 +8,7 @@ let remoteStreamCb: ((s: MediaStream) => void) | null = null
 export function onLocalStream (cb: (s: MediaStream) => void): void { localStreamCb  = cb }
 export function onRemoteStream(cb: (s: MediaStream) => void): void { remoteStreamCb = cb }
 
-export async function startSession(systemPrompt = ''): Promise<void> {
+export async function startSession(systemPrompt = '', provider = ''): Promise<void> {
   // 1. Get microphone access
   localStream = await navigator.mediaDevices.getUserMedia({ audio: true })
   localStreamCb?.(localStream)
@@ -38,10 +38,12 @@ export async function startSession(systemPrompt = ''): Promise<void> {
   const offer = await pc.createOffer()
   await pc.setLocalDescription(offer)
 
-  // 6. POST SDP offer to server (server proxies to OpenAI)
-  const url = systemPrompt
-    ? `/api/session?instructions=${encodeURIComponent(systemPrompt)}`
-    : '/api/session'
+  // 6. POST SDP offer to server (server proxies to provider)
+  const params = new URLSearchParams()
+  if (systemPrompt) params.set('instructions', systemPrompt)
+  if (provider) params.set('provider', provider)
+  const qs = params.toString()
+  const url = qs ? `/api/session?${qs}` : '/api/session'
   const sdpRes = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/sdp' },

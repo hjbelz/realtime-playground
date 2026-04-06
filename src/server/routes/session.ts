@@ -1,17 +1,19 @@
 import type { FastifyInstance } from 'fastify'
 import { openSideband } from '../sideband.js'
-import { createProvider } from '../providers.js'
+import { createProviders, type ProviderName } from '../providers.js'
 
-const provider = createProvider()
+const providers = createProviders()
 
-const MODEL_NAME = process.env.OPENAI_API_KEY
-  ? 'gpt-realtime'
-  : process.env.AZURE_OPENAI_DEPLOYMENT_NAME ?? 'gpt-realtime'
+function modelNameFor(provider: ProviderName): string {
+  return provider === 'Azure'
+    ? (process.env.AZURE_OPENAI_DEPLOYMENT_NAME ?? 'gpt-realtime')
+    : 'gpt-realtime'
+}
 
-function buildSessionConfig(instructions?: string): object {
+function buildSessionConfig(modelName: string, instructions?: string): object {
   return {
     type: 'realtime',
-    model: MODEL_NAME,
+    model: modelName,
     ...(instructions ? { instructions } : {}),
     audio: {
       output: {
@@ -38,21 +40,27 @@ export async function sessionRoutes(fastify: FastifyInstance): Promise<void> {
   })
 
   fastify.get('/provider', async (_request, reply) => {
-    return reply.send({ provider: provider.name })
+    return reply.send({ available: Array.from(providers.keys()) })
   })
 
   fastify.post('/session', async (request, reply) => {
     const sdpOffer = request.body as string
-    const instructions = (request.query as Record<string, string>).instructions || undefined
-    const sessionConfig = buildSessionConfig(instructions)
+    const query = request.query as Record<string, string>
+    const instructions = query.instructions || undefined
+    const providerName = (query.provider as ProviderName) || providers.keys().next().value!
+    const provider = providers.get(providerName)
+
+    if (!provider) {
+      return reply.status(400).send({ error: `Provider '${providerName}' is not available` })
+    }
+
+    const sessionConfig = buildSessionConfig(modelNameFor(providerName), instructions)
 
     try {
-      // Step 1: Exchange SDP (provider handles auth internally)
       fastify.log.info('Attempting to exchange SDP with provider: ' + provider.toString())
       const { sdpAnswer, callId } = await provider.exchangeSdp(sdpOffer, sessionConfig)
       fastify.log.info({ callId }, 'SDP exchange complete')
 
-      // Step 2: Open sideband for server-side monitoring
       if (callId) {
         openSideband(
           provider.sidebandUrl(callId),

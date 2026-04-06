@@ -4,11 +4,42 @@ import { onDataChannelMessage, sendEvent } from './datachannel'
 const startBtn = document.getElementById('start') as HTMLButtonElement
 const stopBtn = document.getElementById('stop') as HTMLButtonElement
 const statusDiv = document.getElementById('status') as HTMLDivElement
-const providerBadge = document.getElementById('provider-badge') as HTMLDivElement
+const providerOpenAIBtn = document.getElementById('provider-openai') as HTMLButtonElement
+const providerAzureBtn = document.getElementById('provider-azure') as HTMLButtonElement
+const providerOpenAIRadio = providerOpenAIBtn.querySelector('input[type="radio"]') as HTMLInputElement
+const providerAzureRadio = providerAzureBtn.querySelector('input[type="radio"]') as HTMLInputElement
 
-fetch('/api/provider').then(r => r.json()).then((data: { provider: string }) => {
-  providerBadge.textContent = data.provider
-  providerBadge.className = data.provider.toLowerCase()
+let selectedProvider = ''
+let availableProviders: Set<string> = new Set()
+
+function updateProviderSelection(provider: string): void {
+  selectedProvider = provider
+  providerOpenAIRadio.checked = provider === 'OpenAI'
+  providerAzureRadio.checked = provider === 'Azure'
+  providerOpenAIBtn.classList.toggle('selected', provider === 'OpenAI')
+  providerAzureBtn.classList.toggle('selected', provider === 'Azure')
+}
+
+function setProviderButtonsEnabled(enabled: boolean): void {
+  providerOpenAIBtn.disabled = !(enabled && availableProviders.has('OpenAI'))
+  providerAzureBtn.disabled = !(enabled && availableProviders.has('Azure'))
+  providerOpenAIRadio.disabled = providerOpenAIBtn.disabled
+  providerAzureRadio.disabled = providerAzureBtn.disabled
+}
+
+fetch('/api/provider').then(r => r.json()).then((data: { available: string[] }) => {
+  availableProviders = new Set(data.available)
+  setProviderButtonsEnabled(true)
+  if (data.available.length > 0) {
+    updateProviderSelection(data.available[0])
+  }
+})
+
+providerOpenAIBtn.addEventListener('click', () => {
+  if (!providerOpenAIBtn.disabled) updateProviderSelection('OpenAI')
+})
+providerAzureBtn.addEventListener('click', () => {
+  if (!providerAzureBtn.disabled) updateProviderSelection('Azure')
 })
 const eventsDiv = document.getElementById('events') as HTMLDivElement
 const eventFiltersDiv = document.getElementById('event-filters') as HTMLDivElement
@@ -366,6 +397,7 @@ startBtn.addEventListener('click', async () => {
   startBtn.disabled = true
   stopBtn.disabled = false
   systemPromptEl.disabled = true
+  setProviderButtonsEnabled(false)
   setStatus('Connecting...')
   stopVisualization()
   setListening(false)
@@ -389,7 +421,7 @@ startBtn.addEventListener('click', async () => {
   outputTotalEl.textContent = outputTextEl.textContent = outputAudioEl.textContent = '0'
   inputCostEl.textContent = outputCostEl.textContent = '$0.000000'
   try {
-    await startSession(systemPromptEl.value.trim())
+    await startSession(systemPromptEl.value.trim(), selectedProvider)
     setStatus('Connected')
   } catch (err) {
     console.error(err)
@@ -397,6 +429,7 @@ startBtn.addEventListener('click', async () => {
     startBtn.disabled = false
     stopBtn.disabled = true
     systemPromptEl.disabled = false
+    setProviderButtonsEnabled(true)
   }
 })
 
@@ -430,5 +463,6 @@ stopBtn.addEventListener('click', () => {
   stopBtn.disabled = true
   startBtn.disabled = false
   systemPromptEl.disabled = false
+  setProviderButtonsEnabled(true)
   setStatus('Disconnected')
 })

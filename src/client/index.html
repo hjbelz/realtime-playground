@@ -42,12 +42,18 @@
     }
     #connection-info .info-label { color: #999; }
     #connection-info .info-value { font-weight: 600; color: #333; }
-    #provider-badge {
+    #provider-selector { display: inline-flex; gap: 0.35rem; }
+    .provider-btn {
+      display: inline-flex; align-items: center; gap: 0.3rem;
       font-size: 0.8rem; font-weight: 600; padding: 0.15rem 0.55rem;
-      border-radius: 4px; color: #fff; display: none;
+      border-radius: 4px; color: #fff; border: 2px solid transparent;
+      cursor: pointer; transition: opacity 0.15s, border-color 0.15s;
     }
-    #provider-badge.openai { background: #10a37f; display: inline-block; }
-    #provider-badge.azure { background: #0078d4; display: inline-block; }
+    .provider-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+    .provider-btn.openai { background: #10a37f; }
+    .provider-btn.azure { background: #0078d4; }
+    .provider-btn.selected { border-color: #333; }
+    .provider-btn input[type="radio"] { margin: 0; cursor: inherit; accent-color: #000; }
     #status { font-weight: 600; }
     #status.disconnected { color: #999; }
     #status.connecting { color: #d97706; }
@@ -245,7 +251,17 @@
     <div class="col">
       <h1>OpenAI Realtime Demo</h1>
       <div id="connection-info">
-        <span><span class="info-label">Endpoint: </span><span id="provider-badge"></span></span>
+        <span class="info-label">Endpoint: </span>
+        <div id="provider-selector">
+          <button id="provider-openai" class="provider-btn openai" disabled>
+            <input type="radio" name="provider" value="OpenAI" disabled>
+            <span>OpenAI</span>
+          </button>
+          <button id="provider-azure" class="provider-btn azure" disabled>
+            <input type="radio" name="provider" value="Azure" disabled>
+            <span>Azure</span>
+          </button>
+        </div>
         <span><span class="info-label">Connection: </span><span id="status" class="info-value disconnected">Disconnected</span></span>
       </div>
       <div id="control-panel">

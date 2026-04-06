@@ -107,17 +107,25 @@ class AzureProvider implements RealtimeProvider {
   }
 }
 
-export function createProvider(): RealtimeProvider {
+export type ProviderName = 'OpenAI' | 'Azure'
+
+export function createProviders(): Map<ProviderName, RealtimeProvider> {
+  const providers = new Map<ProviderName, RealtimeProvider>()
+
   const openaiKey = process.env.OPENAI_API_KEY
   if (openaiKey) {
-    return new OpenAIProvider(openaiKey)
+    providers.set('OpenAI', new OpenAIProvider(openaiKey))
   }
 
   const azureKey = process.env.AZURE_OPENAI_KEY
   const azureEndpoint = process.env.AZURE_OPENAI_ENDPOINT
   if (azureKey && azureEndpoint) {
-    return new AzureProvider(azureKey, azureEndpoint)
+    providers.set('Azure', new AzureProvider(azureKey, azureEndpoint))
   }
 
-  throw new Error('No provider configured. Set OPENAI_API_KEY or AZURE_OPENAI_KEY + AZURE_OPENAI_ENDPOINT.')
+  if (providers.size === 0) {
+    throw new Error('No provider configured. Set OPENAI_API_KEY or AZURE_OPENAI_KEY + AZURE_OPENAI_ENDPOINT.')
+  }
+
+  return providers
 }
