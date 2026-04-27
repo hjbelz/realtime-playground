@@ -296,23 +296,6 @@
           <div class="cost" id="output-cost">$0.000000</div>
         </div>
       </div>
-      <div class="panel-header">
-        <h3 class="panel-title">Event Log</h3>
-        <div class="event-toolbar">
-          <button id="expand-all" title="Expand all">⊞</button>
-          <button id="collapse-all" title="Collapse all">⊟</button>
-          <button class="copy-btn" data-target="events" title="Copy to clipboard">⧉</button>
-        </div>
-      </div>
-      <div id="event-filters">
-        <label data-group="session"><input type="checkbox" checked data-group="session">session</label>
-        <label data-group="input_audio_buffer"><input type="checkbox" checked data-group="input_audio_buffer">input_audio_buffer</label>
-        <label data-group="conversation"><input type="checkbox" checked data-group="conversation">conversation</label>
-        <label data-group="response"><input type="checkbox" checked data-group="response">response</label>
-        <label data-group="output_audio_buffer"><input type="checkbox" checked data-group="output_audio_buffer">output_audio_buffer</label>
-        <label data-group="rate_limits"><input type="checkbox" checked data-group="rate_limits">rate_limits</label>
-      </div>
-      <div id="events"></div>
       <div id="system-prompt-panel" class="panel">
         <div class="panel-header">
           <h3 class="panel-title">System Prompt</h3>
@@ -336,6 +319,25 @@
           <button class="copy-btn" data-target="classifications" title="Copy to clipboard">⧉</button>
         </div>
         <div id="classifications"></div>
+      </section>
+      <section class="panel">
+        <div class="panel-header">
+          <h3 class="panel-title">Event Log</h3>
+          <div class="event-toolbar">
+            <button id="expand-all" title="Expand all">⊞</button>
+            <button id="collapse-all" title="Collapse all">⊟</button>
+            <button class="copy-btn" data-target="events" title="Copy to clipboard">⧉</button>
+          </div>
+        </div>
+        <div id="event-filters">
+          <label data-group="session"><input type="checkbox" checked data-group="session">session</label>
+          <label data-group="input_audio_buffer"><input type="checkbox" checked data-group="input_audio_buffer">input_audio_buffer</label>
+          <label data-group="conversation"><input type="checkbox" checked data-group="conversation">conversation</label>
+          <label data-group="response"><input type="checkbox" checked data-group="response">response</label>
+          <label data-group="output_audio_buffer"><input type="checkbox" checked data-group="output_audio_buffer">output_audio_buffer</label>
+          <label data-group="rate_limits"><input type="checkbox" checked data-group="rate_limits">rate_limits</label>
+        </div>
+        <div id="events"></div>
       </section>
     </div>
   </div>
